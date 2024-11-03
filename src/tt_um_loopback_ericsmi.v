@@ -14,16 +14,22 @@
 `timescale 1ns/10ps
 
 /////////////////////////////////////////////////////////////
-`define BEHAV
+//`define BEHAV
 `define LB_DELAY
+//`define TECH_SKY130
+`define TECH_IHP130
 /////////////////////////////////////////////////////////////
 // helper modules
 
 module buff2(input I, output Z);
 `ifdef BEHAV
   assign `LB_DELAY Z = I;
-`else
+`elsif TECH_SKY130
   sky130_fd_sc_hd__buf_2 sky130_fd_sc_hd__buf_2(.A(I),.X(Z));
+`elsif TECH_IHP130
+  sg13g2_buf_2 sg13g2_buf_2(.A(I),.X(Z));
+`else
+  $error("TECH_xxxxxx");
 `endif
 endmodule
 
@@ -58,7 +64,7 @@ module mux8(input [7:0] I, input [2:0] S, output Z);
   assign `LB_DELAY Z = S[2] ? 
       ( S[1] ? ( S[0] ? I[7] : I[6] ) : ( S[0] ? I[5] : I[4] ) ): 
       ( S[1] ? ( S[0] ? I[3] : I[2] ) : ( S[0] ? I[1] : I[0] ) );
-`else
+`elsif TECH_SKY130
   wire [1:0] w;
         sky130_fd_sc_hd__mux4_2 sky130_fd_sc_hd__mux4_2_0(
                 .S1(S[1]),.S0(S[0]),
@@ -72,6 +78,23 @@ module mux8(input [7:0] I, input [2:0] S, output Z);
                 .S(S[2]),
                 .A0(w[0]),.A1(w[1]),
                 .X(Z));
+`elsif TECH_IHP130
+  wire [1:0] w; // no drive level 2 for mux4
+        sg13g2_mux4_1 sg13g2_mux4_2_0(
+                .S1(S[1]),.S0(S[0]),
+                .A0(I[0]),.A1(I[1]),.A2(I[2]),.A3(I[3]),
+                .X(w[0]));
+        sg13g2_mux4_1 sg13g2_mux4_2_1(
+                .S1(S[1]),.S0(S[0]),
+                .A0(I[4]),.A1(I[5]),.A2(I[6]),.A3(I[7]),
+                .X(w[1]));
+        sg13g2_mux2_2 sg13g2_mux2_2(
+                .S(S[2]),
+                .A0(w[0]),.A1(w[1]),
+                .X(Z));
+  sg13g2_buf_2 sg13g2_buf_2(.A(I),.X(Z));
+`else
+  $error("TECH_xxxxxx");
 `endif
 endmodule
 
