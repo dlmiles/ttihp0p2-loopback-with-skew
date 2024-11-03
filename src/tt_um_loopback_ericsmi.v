@@ -14,7 +14,7 @@
 `timescale 1ns/10ps
 
 /////////////////////////////////////////////////////////////
-//`define BEHAV
+`define BEHAV `COCOTB_SIM
 `define LB_DELAY
 //`define TECH_SKY130
 `define TECH_IHP130
